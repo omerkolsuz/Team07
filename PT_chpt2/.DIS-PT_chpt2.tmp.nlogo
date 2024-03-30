@@ -10,9 +10,8 @@
 ; 5. When the individual tasks are finished you need to merge the different parts back into the original group-bransch
 ; 6. Make sure that the final version works before uploading it under PT_chpt.2 on Canvas.
 ;
-;yhyhyhyhyh
+;
 
-..
 
 ;development comments
 ;
@@ -84,7 +83,8 @@ globals [
 
 ;---- General agent variables
 turtles-own [
-  ;speed
+  speed
+
 ]
 
 ;---- Specific, local variables of patches
@@ -123,7 +123,7 @@ to setup
     ; make background a certain color or leave it black
     ;set pcolor white - 1
     ; cache patch neighborhoods
-    set neighborhood patches in-radius citizen-vision
+    set neighborhood patches in-radius 3 ;
   ]
   ; setup prison
   let prisonpatches patches with [ pxcor >= -5 and pxcor <= 20 and pycor >= -5 and pycor <= 15 ]
@@ -142,12 +142,18 @@ to setup
     set color green
     setxy random-xcor random-ycor
     ; make sure the agents are not placed in prison already during setup:
-    move-to one-of patches with [ not any? turtles-here and region != "prison"]
+    ; move-to one-of patches with [ not any? turtles-here and region != "prison"]
+    while [region = "prison"][
+      setxy random-xcor random-ycor
+    ]
     ; setting specific variables for citizen
     set inPrison? false
     set jailtime 0
     set jailsentence 0
-    ;set speed random 5 + 1 ; make sure it cannot be 0
+    set speed random 5 + 1 ; make sure it cannot be 0
+    ;Adding life and energi here
+    set life 100 ; life value 100
+    set energi 100 ; energi value
   ]
 
   ;---- setup cops
@@ -158,6 +164,10 @@ to setup
     set color blue
     set cop-speed random 3 + 1 ; make sure it cannot be 0
     move-to one-of patches with [ not any? turtles-here and region != "prison"]
+    ;Adding life, energi and hunger for cops
+    set life 100 ; life value 100
+    set energi 100 ; energi value 100
+    set hunger 0 ; hunger value 0
   ]
 
 
