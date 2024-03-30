@@ -84,7 +84,10 @@ globals [
 ;---- General agent variables
 turtles-own [
   speed
-
+  life
+  energi
+  hunger
+  intelligence
 ]
 
 ;---- Specific, local variables of patches
@@ -151,23 +154,27 @@ to setup
     set jailtime 0
     set jailsentence 0
     set speed random 5 + 1 ; make sure it cannot be 0
-    ;Adding life and energi here
+    ;Adding life, energi, hunger and intellingence here
     set life 100 ; life value 100
     set energi 100 ; energi value
+    set hunger 0 ;
+    set intelligence random 10 ;
   ]
-
+    ;setting up vision range
+  let vision_range 5
   ;---- setup cops
   create-cops num-cops [
     set label who
     set shape "person police"
     set size 2
     set color blue
-    set cop-speed random 3 + 1 ; make sure it cannot be 0
+    set cop-speed random 4 + 1 ; make sure it cannot be 0
     move-to one-of patches with [ not any? turtles-here and region != "prison"]
-    ;Adding life, energi and hunger for cops
+    ;Adding life, energi, hunger and intelligence for cops
     set life 100 ; life value 100
     set energi 100 ; energi value 100
     set hunger 0 ; hunger value 0
+    set intelligence random 10;
   ]
 
 
@@ -214,6 +221,32 @@ to go
   ]
 
 end ; - to go part
+
+to citizen_vbehavior
+  ;hitta grannar
+  let target one-of citizens-on neighbors
+
+  ;hitta agenter inom en viss radie
+  let nearby-citizens other citizens in-radius 2
+  let nearby-cops other cops in-radius 2
+
+  ;hitta agenter inom en kon
+  let nearby-turtles other turtles in-cone 3 60
+end
+
+to cop_behavior
+  ;hitta grnaner
+  let target one-of cops-on neighbors
+
+  ;hitta agenter inom en viss radioe
+  let nearby-citizens other citizens in-radius 2
+  let nearby-cops other cops in-radius 2
+
+  ;hitta agenter inom en kod
+  let nearby-turtles other turtles in-cone 3 60
+
+end
+
 @#$#@#$#@
 GRAPHICS-WINDOW
 549
