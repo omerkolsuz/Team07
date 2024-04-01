@@ -102,14 +102,14 @@ citizens-own [
   inPrison?
   jailtime
   jailsentence
+  state
+  escape-speed
 ]
 ;---- Specific, local variables of cop-agents
 cops-own [
   ;cop-vision is set by slider
   cop-speed
 ]
-
-
 
 
 ; ******************* SETUP PART *****************
@@ -120,6 +120,7 @@ to setup
   set max-jailterm 50
 
 
+
   ; setup of the environment:
   ; setup of all patches
   ask patches [
@@ -128,6 +129,20 @@ to setup
     ; cache patch neighborhoods
     set neighborhood patches in-radius 3 ;
   ]
+
+;  setup-prison ;setup prison area
+
+;  setup-agents ; setup citizens and cops
+
+ ; to setup-citizens
+
+;end
+
+ ; to setup-cops
+
+;end
+
+
   ; setup prison
   let prisonpatches patches with [ pxcor >= -5 and pxcor <= 20 and pycor >= -5 and pycor <= 15 ]
     ask prisonpatches [
@@ -144,6 +159,8 @@ to setup
     set size 1.5
     set color green
     setxy random-xcor random-ycor
+    set state "free"
+    set escape-speed 2 ; eftersom flykthastigheten är högre än normal hastighet
     ; make sure the agents are not placed in prison already during setup:
     ; move-to one-of patches with [ not any? turtles-here and region != "prison"]
     while [region = "prison"][
@@ -204,6 +221,40 @@ to go
   ;---- Agents to-go part -------------
   ; Cyclic execution of what the agents are supposed to do
   ;
+
+  ask cops [
+    let nearest-citizen min-one-of citizens [distance myself]
+    ifelse can-see? nearest-citizen 10[
+      face nearest-citizen
+      fd 1
+      if distance nearest-citizen < 1 [
+        ask nearest-citizen [
+          move-to one-of patches with [region = "prison"]
+          set inPrison? true
+          set jailtime jailtime + random max-jailterm
+        ]
+      ]
+    ]
+    [
+      rt random 360
+      fd 1
+    ]
+  set hunger hunger + 1
+    if hunger > 20 [go-to-restaurant]
+  set energi energi - 0.5
+    if energi <= 0 [set energi 100]
+  ]
+
+  ask citizens[
+    if state = "free" [
+      move-randomly
+      check-for-cops
+    ]
+    if state = "running" [
+      escape-from-cops
+    ]
+
+  ]
   ask turtles [
     ; Reactive part based on the type of agent
     if (breed = citizens) [
@@ -247,6 +298,38 @@ to cop_vision_behavior ; ändrade namnet eftersom jag får med cop.nls eftersom 
 
 end
 
+to-report can-see? [agent distance-limit]
+  report agent != nobody and distance agent <= distance-limit
+end
+
+ to go-to-restaurant
+  let restaurant-x 25
+  let restaurant-y 25
+  face patch-at restaurant-x restaurant-y
+  ifelse distance (patch-at restaurant-x restaurant-y) > 1[ fd 1 ]
+[
+    set hunger 0
+    set energi 100
+    show "Eaten and reenergized now!" ]
+
+end
+
+to move-randomly
+  rt random 360
+  fd 1
+end
+
+to check-for-cops
+  if any? cops in-radius 5[
+    set state "running"
+  ]
+end
+
+to escape-from-cops
+  set speed escape-speed
+  rt random 360
+  fd speed
+end
 @#$#@#$#@
 GRAPHICS-WINDOW
 549
@@ -284,7 +367,7 @@ num-citizens
 num-citizens
 1
 30
-19.0
+26.0
 1
 1
 NIL
@@ -333,7 +416,7 @@ num-cops
 num-cops
 0
 50
-4.0
+6.0
 1
 1
 NIL
@@ -348,7 +431,7 @@ citizen-vision
 citizen-vision
 1
 10
-3.0
+10.0
 0.1
 1
 NIL
@@ -363,7 +446,7 @@ cop-vision
 cop-vision
 1
 10
-3.0
+6.3
 0.1
 1
 NIL
