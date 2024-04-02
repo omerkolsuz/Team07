@@ -111,6 +111,8 @@ citizens-own [
 cops-own [
   ;cop-vision is set by slider
   cop-speed
+  isEating
+  eatingTicks
 ]
 
 
@@ -123,13 +125,13 @@ to setup
   set restaurant-x 30
   set restaurant-y 30
 
-
+;
 
   ; setup of the environment:
   ; setup of all patches
   ask patches [
     ; make background a certain color or leave it black
-    ;set pcolor white - 1
+    set pcolor white - 1
     ; cache patch neighborhoods
     set neighborhood patches in-radius 3 ;
   ]
@@ -151,7 +153,7 @@ to setup
     set region "restaurant"
   ]
   ask one-of restaurant-patches [
-  set plabel "McDonalds"
+  set plabel "Turkish Döner"
   ]
   ; setup prison
   let prisonpatches patches with [ pxcor >= -5 and pxcor <= 20 and pycor >= -5 and pycor <= 15 ]
@@ -159,7 +161,7 @@ to setup
       set pcolor gray
       set region "prison"
     ]
-    ask one-of prisonpatches [set plabel "PRISON"]
+    ask one-of prisonpatches [set plabel "PRISON of Hörby"]
 
 
   ; setup citizen-agents
@@ -202,6 +204,8 @@ to setup
     set energi 100 ; energi value 100
     set hunger 0 ; hunger value 0
     set intelligence random 10;
+    set isEating false
+    set eatingTicks 0
   ]
 
 
@@ -221,7 +225,7 @@ end
 
 
 ; ******************* TO GO/ STARTING PART ********
-;;
+
 to go
   ;---- Basic functions, like setting the time
   ;
@@ -233,27 +237,39 @@ to go
   ;
 
   ask cops [
-    let nearest-citizen min-one-of citizens [distance myself]
-    ifelse can-see? nearest-citizen 10[
-      face nearest-citizen
-      fd 1
-      if distance nearest-citizen < 1 [
-        ask nearest-citizen [
-          move-to one-of patches with [region = "prison"]
-          set inPrison? true
-          set jailtime jailtime + random max-jailterm
+  if isEating [
+    set eatingTicks eatingTicks - 1
+    if eatingTicks = 0 [
+      set isEating false
+      print "Polisen har ätit klart och är redo att fortsätta."
+    ]
+  ]
+
+  if not isEating [
+    ; Detta är en enkel 'if' kontroll, inte 'ifelse'
+    if hunger > 20 [
+      go-to-restaurant
+    ] ; Observera att efter denna 'if' kontroll, om du vill ha ett alternativt block (som 'else'), bör du använda 'ifelse'
+
+    ; Om vi bara vill fortsätta utan 'else'-blocket, fortsätter vi så här:
+    if hunger <= 20 [
+      move-randomly
+      let nearest-citizen min-one-of citizens [distance myself]
+      if can-see? nearest-citizen 10 [
+        face nearest-citizen
+        fd 1
+        if distance nearest-citizen < 1 [
+          ask nearest-citizen [
+            move-to one-of patches with [region = "prison"]
+            set inPrison? true
+            set jailtime jailtime + random max-jailterm
+          ]
         ]
       ]
     ]
-    [
-      rt random 360
-      fd 1
-    ]
-  set hunger hunger + 1
-    if hunger > 20 [go-to-restaurant]
-  set energi energi - 0.5
-    if energi <= 0 [set energi 100]
   ]
+]
+
 
   ask citizens[
     if state = "free" [
@@ -303,7 +319,7 @@ to cop_vision_behavior ; ändrade namnet eftersom jag får med cop.nls eftersom 
   let nearby-citizens other citizens in-radius 2
   let nearby-cops other cops in-radius 2
 
-  ;hitta agenter inom en ko
+  ;hitta agenter inom en kon
   let nearby-turtles other turtles in-cone 3 60
 
 end
@@ -320,13 +336,20 @@ end
 [
     set hunger 0
     set energi 100
-    show "Eaten and reenergized now!" ]
+    set isEating true
+    set eatingTicks 5 ; antalet ticks polis ska äta
+    print "Polisen äter nu!"
+    ]
+
 
 end
 
 to move-randomly
+  let next-patch patch-ahead 1
+  if not (([pcolor] of next-patch = red) and (hunger <= 20)) [
   rt random 360
   fd 1
+  ]
 end
 
 to check-for-cops
@@ -377,7 +400,7 @@ num-citizens
 num-citizens
 1
 30
-26.0
+24.0
 1
 1
 NIL
@@ -426,7 +449,7 @@ num-cops
 num-cops
 0
 50
-6.0
+12.0
 1
 1
 NIL
