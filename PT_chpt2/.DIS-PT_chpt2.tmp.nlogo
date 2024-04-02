@@ -1,4 +1,345 @@
+; DIS-PT_chpt2
+; template for the programming task with cops and citizen agents
+;
+; HOW TO WORK WITH THIS FILE:
+;
+; 1. Bransch this file from Github for your group
+; 2. Divide the work from the task to your group members, so that every group member has at least one own task
+; 3. Make individual bransches per group member from the group-bransch that you made under 1.
+; 4. Start with your individual tasks development and make push- and pulls between your individual bransches as needed
+; 5. When the individual tasks are finished you need to merge the different parts back into the original group-bransch
+; 6. Make sure that the final version works before uploading it under PT_chpt.2 on Canvas.
+;
+;
 
+
+;development comments
+;
+;1-different ways to find other agents within a vision range:
+; a) if they are neighbors to the agent looking (probably includes oneself as well?)
+;let target one-of citizens-on neighbors
+; b) if they look within a radius (360 degrees around?)
+;set target one-of other citizens in-radius 2
+;let police one-of other cops in-radius 2
+
+;let nearby-officers other turtles with [breed = cops] in-radius (vision_range * 3)
+;set target min-one-of nearby-officers [xcor + ycor]
+;
+; c) within cones
+;set target turtles-on patches in-cone 3 60
+;set target min-one-of other turtles in-cone 3 60 [distance myself]
+
+;2-finding a patch in the neighborhood to move to that does not contain agents of a certain breed
+;use patches by letting each patch define its neighborhood
+;-requires own patch-variable 'neighborhood'
+;patches-own [
+;  neighborhood        ; surrounding patches within the vision radius
+;]
+; -requires to ask the patches to set their variable neighborhood to the patches within their in-radius vision
+;ask patches [
+;  set neighborhood patches in-radius vision ; vision is a variable, set for example by ruler
+; ]
+;
+;- moving to a patch that contains no police
+;to move
+;  let targets neighborhood with [not any? cops-here]
+;  if any? targets [move-to one-of targets]
+;
+;3- cops finding citizens close enough nearby to arrest
+; if any? (citizens-on neighborhood) with [ active? ] [
+;    let suspect one-of (citizens-on neighborhood) with [ active? ]
+;    move-to suspect  ; move to patch of the suspect
+;    ask suspect [
+;      set active? false
+;      set jail-term random max-jail-term
+;      go-to prison
+;    ]
+
+
+; ************ INCLUDED FILES *****************
+__includes [
+    "citizens.nls"
+    "cops.nls"
+    "vid.nls" ; contains the code for the recorder. You also need to activate the vid-extension and the command at the end of setup
+]
+; ********************end included files ********
+
+; ************ EXTENSIONS *****************
+extensions [
+ vid bitmap; used for recording of the simulation
+]
+; ********************end extensions ********
+
+;****************** INITIAL AND DEFINITIONS PART **********
+;
+;----- Breeds of agents
+breed [citizens citizen]  ;
+breed [cops cop] ;
+
+globals [
+  ;
+  max-jailterm
+  restaurant-x
+  restaurant-y
+]
+
+;---- General agent variables
+turtles-own [
+  speed
+  life
+  energi
+  hunger
+  intelligence
+]
+
+;---- Specific, local variables of patches
+patches-own [
+  neighborhood        ; surrounding patches within the vision radius
+  region              ; used for identification of different regions
+]
+
+;---- Specific, local variables of citizen-agents
+citizens-own [
+  ;citizen-vision is set by ruler 'citizen-vision'
+  inPrison?
+  jailtime
+  jailsentence
+  state
+  escape-speed
+]
+;---- Specific, local variables of cop-agents
+cops-own [
+  ;cop-vision is set by slider
+  cop-speed
+]
+
+
+; ******************* SETUP PART *****************
+; setup of the environment, and the different agents
+to setup
+  clear-all
+  ; define global variables that are not set as sliders
+  set max-jailterm 50
+  set restaurant-x 30
+  set restaurant-y 30
+
+
+
+  ; setup of the environment:
+  ; setup of all patches
+  ask patches [
+    ; make background a certain color or leave it black
+    ;set pcolor white - 1
+    ; cache patch neighborhoods
+    set neighborhood patches in-radius 3 ;
+  ]
+
+;  setup-prison ;setup prison area
+
+;  setup-agents ; setup citizens and cops
+
+ ; to setup-citizens
+
+;end
+
+ ; to setup-cops
+
+;end
+  let restaurant-patches patches with [ pxcor >= 25 and pxcor <= 35 and pycor >= 25 and pycor <= 35 ]
+  ask restaurant-patches [
+    set pcolor red
+    set region "restaurant"
+  ]
+  ask one-of restaurant-patches [
+  set plabel "McDonalds"
+  ]
+  ; setup prison
+  let prisonpatches patches with [ pxcor >= -5 and pxcor <= 20 and pycor >= -5 and pycor <= 15 ]
+    ask prisonpatches [
+      set pcolor gray
+      set region "prison"
+    ]
+    ask one-of prisonpatches [set plabel "PRISON"]
+
+
+  ; setup citizen-agents
+  create-citizens num-citizens [
+    set label who
+    set shape "person"
+    set size 1.5
+    set color green
+    setxy random-xcor random-ycor
+    set state "free"
+    set escape-speed 2 ; eftersom flykthastigheten är högre än normal hastighet
+    ; make sure the agents are not placed in prison already during setup:
+    ; move-to one-of patches with [ not any? turtles-here and region != "prison"]
+    while [region = "prison"][
+      setxy random-xcor random-ycor
+    ]
+    ; setting specific variables for citizen
+    set inPrison? false
+    set jailtime 0
+    set jailsentence 0
+    set speed random 5 + 1 ; make sure it cannot be 0
+    ;Adding life, energi, hunger and intellingence here
+    set life 100 ; life value 100
+    set energi 100 ; energi value
+    set hunger 0 ;
+    set intelligence random 10 ;
+  ]
+    ;setting up vision range
+  let vision_range 5
+  ;---- setup cops
+  create-cops num-cops [
+    set label who
+    set shape "person police"
+    set size 2
+    set color blue
+    set cop-speed random 4 + 1 ; make sure it cannot be 0
+    move-to one-of patches with [ not any? turtles-here and region != "prison"]
+    ;Adding life, energi, hunger and intelligence for cops
+    set life 100 ; life value 100
+    set energi 100 ; energi value 100
+    set hunger 0 ; hunger value 0
+    set intelligence random 10;
+  ]
+
+
+
+  ; must be last in the setup-part:
+  reset-ticks
+  ;recorder
+  if vid:recorder-status = "recording" [
+    if Source = "Only View" [vid:record-view] ; records the plane
+    if Source = "With Interface" [vid:record-interface] ; records the interface
+  ]
+
+end
+
+; **************************end setup part *******
+
+
+
+; ******************* TO GO/ STARTING PART ********
+;;
+to go
+  ;---- Basic functions, like setting the time
+  ;
+  tick ;- update time
+
+
+  ;---- Agents to-go part -------------
+  ; Cyclic execution of what the agents are supposed to do
+  ;
+
+  ask cops [
+    let nearest-citizen min-one-of citizens [distance myself]
+    ifelse can-see? nearest-citizen 10[
+      face nearest-citizen
+      fd 1
+      if distance nearest-citizen < 1 [
+        ask nearest-citizen [
+          move-to one-of patches with [region = "prison"]
+          set inPrison? true
+          set jailtime jailtime + random max-jailterm
+        ]
+      ]
+    ]
+    [
+      rt random 360
+      fd 1
+    ]
+  set hunger hunger + 1
+    if hunger > 20 [go-to-restaurant]
+  set energi energi - 0.5
+    if energi <= 0 [set energi 100]
+  ]
+
+  ask citizens[
+    if state = "free" [
+      move-randomly
+      check-for-cops
+    ]
+    if state = "running" [
+      escape-from-cops
+    ]
+
+  ]
+  ask turtles [
+    ; Reactive part based on the type of agent
+    if (breed = citizens) [
+      citizen_behavior ; code as defined in the include-file "citizens.nls"
+      ]
+    if (breed = cops) [
+      cop_behavior ; code as defined in the include-file "cops.nls"
+      ]
+  ]
+
+  ;recorder
+ if vid:recorder-status = "recording" [
+    if Source = "Only View" [vid:record-view] ; records the plane
+    if Source = "With Interface" [vid:record-interface] ; records the interface
+  ]
+
+end ; - to go part
+
+to citizen_vision_behavior ; ändrade namnet eftersom jag får med citizens.nls eftersom det finns samma namn på båda kod
+  ;hitta grannar
+  let target one-of citizens-on neighbors
+
+  ;hitta agenter inom en viss radie
+  let nearby-citizens other citizens in-radius 2
+  let nearby-cops other cops in-radius 2
+
+  ;hitta agenter inom en kon
+  let nearby-turtles other turtles in-cone 3 60
+end
+
+to cop_vision_behavior ; ändrade namnet eftersom jag får med cop.nls eftersom det finns samma namn på båda kod
+  ;hitta grnaner
+  let target one-of cops-on neighbors
+
+  ;hitta agenter inom en viss radioe
+  let nearby-citizens other citizens in-radius 2
+  let nearby-cops other cops in-radius 2
+
+  ;hitta agenter inom en ko
+  let nearby-turtles other turtles in-cone 3 60
+
+end
+
+to-report can-see? [agent distance-limit]
+  report agent != nobody and distance agent <= distance-limit
+end
+
+ to go-to-restaurant
+  ;let restaurant-x 25
+  ;let restaurant-y 25
+  face patch-at restaurant-x restaurant-y
+  ifelse distance (patch-at restaurant-x restaurant-y) > 1[ fd 1 ]
+[
+    set hunger 0
+    set energi 100
+    show "Eaten and reenergized now!" ]
+
+end
+
+to move-randomly
+  rt random 360
+  fd 1
+end
+
+to check-for-cops
+  if any? cops in-radius 5[
+    set state "running"
+  ]
+end
+
+to escape-from-cops
+  set speed escape-speed
+  rt random 360
+  fd speed
+end
 @#$#@#$#@
 GRAPHICS-WINDOW
 549
