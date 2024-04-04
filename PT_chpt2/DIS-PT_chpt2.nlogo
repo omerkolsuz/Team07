@@ -249,9 +249,7 @@ to go
     ; Detta är en enkel 'if' kontroll, inte 'ifelse'
     if hunger > 20 [
       go-to-restaurant
-    ] ; Observera att efter denna 'if' kontroll, om du vill ha ett alternativt block (som 'else'), bör du använda 'ifelse'
-
-    ; Om vi bara vill fortsätta utan 'else'-blocket, fortsätter vi så här:
+    ]
     if hunger <= 20 [
       move-randomly
       let nearest-citizen min-one-of citizens [distance myself]

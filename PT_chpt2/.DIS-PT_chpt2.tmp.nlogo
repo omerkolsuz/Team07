@@ -125,7 +125,7 @@ to setup
   set restaurant-x 30
   set restaurant-y 30
 
-;
+; dessa är grundläggande värden för simuleringen ink position.
 
   ; setup of the environment:
   ; setup of all patches
@@ -251,7 +251,7 @@ to go
       go-to-restaurant
     ] ; Observera att efter denna 'if' kontroll, om du vill ha ett alternativt block (som 'else'), bör du använda 'ifelse'
 
-    ; Om vi bara vill fortsätta utan 'else'-blocket, fortsätter vi så här:
+    :
     if hunger <= 20 [
       move-randomly
       let nearest-citizen min-one-of citizens [distance myself]
