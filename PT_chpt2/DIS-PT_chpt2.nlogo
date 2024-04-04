@@ -1,3 +1,5 @@
+; @author Ömer, Oscar, Adam
+
 ; DIS-PT_chpt2
 ; template for the programming task with cops and citizen agents
 ;
