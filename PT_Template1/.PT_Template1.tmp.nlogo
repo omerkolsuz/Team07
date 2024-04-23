@@ -1,6 +1,6 @@
 ; DIS-PT_chpt6
-;hej det är ömer
 ; template for the programming task with cops and citizen agents
+;h
 ; HOW TO WORK WITH THIS FILE:
 ;
 ; 1. Bransch this file from Github for your group
