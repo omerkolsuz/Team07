@@ -179,21 +179,20 @@ end ; - to go part
 
 ;-----------------------
 to citizens_behavior
-  ; Kontrollera vilket tillstånd 'state' är i och utför motsvarande beteende
-  if state = "go-to-square" [
+  if state "" [
     go-to-town-square
-  ]
-  if state = "demonstration" [
-    go-to-check-others
-  ]
-  if state = "standing-still" [
-    standing-still
-  ]
-  if state = "go-home" [
-    go-home
+  ] [
+    if state = "demonstration" [
+      go-to-check-others
+    ]
+    if state = "standing-still" [
+      standing-still
+    ]
+    if state = "go-home" [
+      go-home
+    ]
   ]
 end
-
 
 ;go to Town Square
 to go-to-town-square
@@ -213,7 +212,6 @@ end
 to standing-still
   if standing-time > 0 [
     set standing-time standing-time
-  ]
 end
 
 ;go home
@@ -295,7 +293,7 @@ num-citizens
 num-citizens
 1
 150
-21.0
+4.0
 1
 1
 NIL
@@ -344,7 +342,7 @@ num-cops
 num-cops
 0
 150
-20.0
+5.0
 1
 1
 NIL
@@ -359,7 +357,7 @@ citizen-vision
 citizen-vision
 1
 10
-10.0
+1.0
 0.1
 1
 NIL
@@ -374,7 +372,7 @@ cop-vision
 cop-vision
 1
 100
-37.0
+1.0
 0.1
 1
 NIL
