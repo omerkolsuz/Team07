@@ -1,6 +1,6 @@
 ; DIS-PT_chpt6
 ; template for the programming task with cops and citizen agents
-;hello its me
+
 ;
 ; HOW TO WORK WITH THIS FILE:
 ;
